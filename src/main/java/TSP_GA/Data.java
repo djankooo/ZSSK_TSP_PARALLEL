@@ -1,5 +1,6 @@
 package TSP_GA;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
