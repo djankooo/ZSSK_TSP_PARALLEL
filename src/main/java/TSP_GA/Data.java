@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class Data {
+class Data {
 
     private String pathToDirectory;
     private String pathToFile;
@@ -21,12 +21,12 @@ public class Data {
 
     private Map map;
 
-    protected void checkAndSetFile() {
+    void checkAndSetFile() {
         if (pathToDirectory != null && pathToFile != null)
             file = new File(getPathToDirectory() + getPathToFile());
     }
 
-    protected void saveMap() throws IOException {
+    void saveMap() throws IOException {
 
         Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
 
