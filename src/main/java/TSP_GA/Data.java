@@ -1,6 +1,5 @@
 package TSP_GA;
 
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -27,7 +26,7 @@ public class Data {
             file = new File(getPathToDirectory() + getPathToFile());
     }
 
-    protected Map saveMap() throws IOException {
+    protected void saveMap() throws IOException {
 
         Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
 
@@ -52,7 +51,7 @@ public class Data {
                     map.setCOMMENT(split[1]);
                 }
                 if (split[0].contains("DIMENSION")) {
-                    map.setDIMENSION(Integer.getInteger(split[1]));
+                    map.setDIMENSION(Integer.parseInt(split[1].replaceAll("\\s+", "")));
                 }
                 if (split[0].contains("EDGE_WEIGHT_TYPE")) {
                     map.setEDGE_WEIGHT_TYPE(split[1]);
@@ -68,7 +67,6 @@ public class Data {
                 map.addCity(new City(Float.parseFloat(cityData[1]), Float.parseFloat(cityData[2])));
             }
         }
-        return map;
     }
 }
 
