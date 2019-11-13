@@ -11,26 +11,23 @@ import java.util.regex.Pattern;
 
 @Getter
 @Setter
-public class Data {
+class Data {
 
     private String pathToDirectory;
     private String pathToFile;
 
     private File file;
     private BufferedReader bufferedReader;
+    private Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
 
-    private Map map;
+    private Map map = new Map();
 
-    protected void checkAndSetFile() {
+    void checkAndSetFile() {
         if (pathToDirectory != null && pathToFile != null)
             file = new File(getPathToDirectory() + getPathToFile());
     }
 
-    protected Map saveMap() throws IOException {
-
-        Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
-
-        map = new Map();
+    void saveMap() throws IOException {
 
         bufferedReader = new BufferedReader(new FileReader(file));
 
@@ -51,7 +48,7 @@ public class Data {
                     map.setCOMMENT(split[1]);
                 }
                 if (split[0].contains("DIMENSION")) {
-                    map.setDIMENSION(Integer.getInteger(split[1]));
+                    map.setDIMENSION(Integer.parseInt(split[1].replaceAll("\\s+", "")));
                 }
                 if (split[0].contains("EDGE_WEIGHT_TYPE")) {
                     map.setEDGE_WEIGHT_TYPE(split[1]);
@@ -67,7 +64,6 @@ public class Data {
                 map.addCity(new City(Float.parseFloat(cityData[1]), Float.parseFloat(cityData[2])));
             }
         }
-        return map;
     }
 }
 
