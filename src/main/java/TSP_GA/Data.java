@@ -18,8 +18,9 @@ class Data {
 
     private File file;
     private BufferedReader bufferedReader;
+    private Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
 
-    private Map map;
+    private Map map = new Map();
 
     void checkAndSetFile() {
         if (pathToDirectory != null && pathToFile != null)
@@ -27,10 +28,6 @@ class Data {
     }
 
     void saveMap() throws IOException {
-
-        Pattern pattern = Pattern.compile("[0-9][ ][0-9]*[.][0-9]*[ ][0-9]*[.][0-9]*");
-
-        map = new Map();
 
         bufferedReader = new BufferedReader(new FileReader(file));
 
