@@ -15,10 +15,11 @@ import java.util.stream.IntStream;
 @Setter
 public class GeneticAlgorithm {
 
-    private final int SIZE_OF_POPULATION = 10;
+    private final int SIZE_OF_POPULATION = 10000;
     private Map map;
     private ArrayList<ArrayList<Integer>> population = new ArrayList<>();
     private Integer numberOfCities;
+    private Integer tournamentSize=300;
 
     public GeneticAlgorithm(Map map) {
         this.map = map;
@@ -63,8 +64,31 @@ public class GeneticAlgorithm {
         population.sort(Comparator.comparingDouble(this::routeLength));
     }
 
-    void tournamentSelection() {
-        // TODO : Wybierasz kilka najlepszych rozwiazan metoda turniejowa
+    public ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
+
+        ArrayList<ArrayList<Integer>> tournamentRouts = new ArrayList<>(tournamentSize);
+        ArrayList routes = new ArrayList();
+        int length = pop.size();
+        if (length < tournamentSize) return null;
+        int j=0;
+        for (int i = length - 1; i >= length - tournamentSize; --i) {
+            int randomId = (int) (Math.random() * SIZE_OF_POPULATION);
+            tournamentRouts.add(j,pop.get(randomId));
+            j++;
+        }
+        int k=0;
+        for (ArrayList<Integer> integers : tournamentRouts) {
+            routes.add(routeLength(integers));
+        }
+        Double winner = (Double) Collections.min(routes);
+        for (int i = 0; i < tournamentSize; i++) {
+            if (routes.get(i) == winner) {
+                System.out.println(winner);
+                return tournamentRouts.get(i);
+
+            }
+        }
+        return null;
     }
 
     ArrayList<ArrayList<Integer>> crossingGenotypes(int crossingProbability, ArrayList<Integer> parent1, ArrayList<Integer> parent2) {
