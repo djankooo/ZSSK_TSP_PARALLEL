@@ -9,10 +9,11 @@ public class App {
         Data data = new Data();
         GeneticAlgorithm geneticAlgorithm;
 
-        String janPath = "/home/max/ZSSK/ZSSK_TSP_PARALLEL/src/main/java/resources/";
+        String maxPath = "/home/max/ZSSK/ZSSK_TSP_PARALLEL/src/main/java/resources/";
+        String janPath = "/home/djankooo/IdeaProjects/ZSSK/src/main/java/resources/";
 
         data.setPathToDirectory(janPath);
-        data.setPathToFile("berlin52.tsp");
+        data.setPathToFile("test1.tsp");
         data.checkAndSetFile();
         data.saveMap();
 
@@ -20,7 +21,6 @@ public class App {
         geneticAlgorithm.createPopulation();
 
         ArrayList tournamentWinner=geneticAlgorithm.tournamentSelection(geneticAlgorithm.getPopulation());
-        System.out.println(tournamentWinner);
 
 
     }

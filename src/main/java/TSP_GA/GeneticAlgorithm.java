@@ -13,20 +13,20 @@ import java.util.stream.IntStream;
 
 @Getter
 @Setter
-public class GeneticAlgorithm {
+class GeneticAlgorithm {
 
-    private final int SIZE_OF_POPULATION = 10000;
+    private final int SIZE_OF_POPULATION = 10;
     private Map map;
     private ArrayList<ArrayList<Integer>> population = new ArrayList<>();
     private Integer numberOfCities;
-    private Integer tournamentSize=300;
+    private Integer tournamentSize = 4;
 
-    public GeneticAlgorithm(Map map) {
+    GeneticAlgorithm(Map map) {
         this.map = map;
         this.numberOfCities = this.map.getDIMENSION();
     }
 
-    public void createPopulation() {
+    void createPopulation() {
         int iterator = 0;
         while (iterator != SIZE_OF_POPULATION) {
             population.add(randomSolution());
@@ -60,35 +60,60 @@ public class GeneticAlgorithm {
     }
 
 
-    void sortSolutions() {
+    ArrayList<ArrayList<Integer>> sortSolutions(ArrayList<ArrayList<Integer>> population) {
         population.sort(Comparator.comparingDouble(this::routeLength));
+        return population;
     }
 
-    public ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
+//    public ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
+//
+//        ArrayList<ArrayList<Integer>> tournamentRouts = new ArrayList<>(tournamentSize);
+//        ArrayList routes = new ArrayList();
+//        int length = pop.size();
+//        if (length < tournamentSize) return null;
+//        int j=0;
+//        for (int i = length - 1; i >= length - tournamentSize; --i) {
+//            int randomId = (int) (Math.random() * SIZE_OF_POPULATION);
+//            tournamentRouts.add(j,pop.get(randomId));
+//            j++;
+//        }
+//        int k=0; // Po co k?
+//        for (ArrayList<Integer> integers : tournamentRouts) {
+//            routes.add(routeLength(integers));
+//        }
+//        Double winner = (Double) Collections.min(routes);
+//        for (int i = 0; i < tournamentSize; i++) {
+//            if (routes.get(i) == winner) {
+//                System.out.println(winner);
+//                return tournamentRouts.get(i);
+//
+//            }
+//        }
+//        return null;
+//    }
 
-        ArrayList<ArrayList<Integer>> tournamentRouts = new ArrayList<>(tournamentSize);
-        ArrayList routes = new ArrayList();
-        int length = pop.size();
-        if (length < tournamentSize) return null;
-        int j=0;
-        for (int i = length - 1; i >= length - tournamentSize; --i) {
-            int randomId = (int) (Math.random() * SIZE_OF_POPULATION);
-            tournamentRouts.add(j,pop.get(randomId));
-            j++;
-        }
-        int k=0;
-        for (ArrayList<Integer> integers : tournamentRouts) {
-            routes.add(routeLength(integers));
-        }
-        Double winner = (Double) Collections.min(routes);
-        for (int i = 0; i < tournamentSize; i++) {
-            if (routes.get(i) == winner) {
-                System.out.println(winner);
-                return tournamentRouts.get(i);
+    ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
+        ArrayList<ArrayList<Integer>> winnerPopulation = new ArrayList<>();
+
+        System.out.println("population - > " + pop);
+
+        for (int i = 0; i < pop.size() - 1; i = i + 2) {
+
+            System.out.println("[1] -> " + pop.get(i) + " -> " + routeLength(pop.get(i)).intValue());
+            System.out.println("[2] -> " + pop.get(i + 1) + " -> " + routeLength(pop.get(i + 1)).intValue());
+
+            if ((routeLength(pop.get(i)) < routeLength(pop.get(i + 1)))) {
+                winnerPopulation.add(pop.get(i));
+                System.out.println("Dodano [1] -> " + pop.get(i) + " -> " + routeLength(pop.get(i)).intValue());
+            } else {
+                winnerPopulation.add(pop.get(i + 1));
+                System.out.println("Dodano [2] -> " + pop.get(i + 1) + " -> " + routeLength(pop.get(i + 1)).intValue());
 
             }
         }
-        return null;
+
+        System.out.println("winnerPopulation - > " + winnerPopulation);
+        return (winnerPopulation.size() > 1) ? tournamentSelection(winnerPopulation) : winnerPopulation.get(0);
     }
 
     ArrayList<ArrayList<Integer>> crossingGenotypes(int crossingProbability, ArrayList<Integer> parent1, ArrayList<Integer> parent2) {
