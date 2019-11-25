@@ -22,16 +22,14 @@ class GeneticAlgorithm {
     private final int MAX_ITERATIONS;
     private final int GENOTYPES_TO_CROSSING = 16;
     private final int SOLUTION_SIZE;
-    private final int ISLAND_SIZE;
-    private final int SOLUTIONS_TO_MIGRATE;
 
     private Double finalRouteLength;
     private Map map;
 
-    private volatile ArrayList<ArrayList<Integer>> population = new ArrayList<>();
-    private volatile int iterations = 0;
+    private ArrayList<ArrayList<Integer>> population = new ArrayList<>();
+    private int iterations = 0;
 
-    GeneticAlgorithm(Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int max_iterations, int islandSize, int solutionsToMigrate) {
+    GeneticAlgorithm(Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int max_iterations) {
         this.map = map;
         this.MAX_ITERATIONS = max_iterations;
         this.SOLUTION_SIZE = this.map.getDIMENSION();
@@ -39,8 +37,6 @@ class GeneticAlgorithm {
         this.MUTATION_PROBABILITY = mutationProbability;
         this.CROSSING_PROBABILITY = crossingProbability;
         this.TOURNAMENT_SIZE = tournamentSize;
-        this.ISLAND_SIZE = islandSize;
-        this.SOLUTIONS_TO_MIGRATE = solutionsToMigrate;
     }
 
     private ArrayList<ArrayList<Integer>> createPopulation() {
@@ -59,7 +55,7 @@ class GeneticAlgorithm {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 
-    private Double routeLength(ArrayList<Integer> path) {
+    public Double routeLength(ArrayList<Integer> path) {
         double routeLength = IntStream
                 .range(0, SOLUTION_SIZE - 1)
                 .filter(i -> i != SOLUTION_SIZE)
@@ -140,13 +136,7 @@ class GeneticAlgorithm {
         return population;
     }
 
-    public synchronized void replaceSolutions(ArrayList<ArrayList<Integer>> passedValues) {
-        sortSolutions(population).subList(0, POPULATION_SIZE - SOLUTIONS_TO_MIGRATE);
-        population.addAll(passedValues);
-        sortSolutions(population);
-    }
-
-    public ArrayList<ArrayList<Integer>> algorithm() {
+    public ArrayList<Integer> algorithm() {
         population = new ArrayList<>(createPopulation());
         while (iterations < MAX_ITERATIONS) {
 
@@ -158,12 +148,15 @@ class GeneticAlgorithm {
                 tournamentPopulation.add(tournamentSelection(drawRandomSolutionsToTournament(population)));
             }
             crossedPopulation = crossingGenotypes(tournamentPopulation);
-            mutatedPopulation = mutationGenotypes(crossedPopulation);
+            population = new ArrayList<>(sortSolutions(population).subList(0,POPULATION_SIZE - GENOTYPES_TO_CROSSING));
+            population.addAll(crossedPopulation);
+            population = sortSolutions(population);
+            mutatedPopulation = mutationGenotypes(population);
             population = sortSolutions(mutatedPopulation);
             iterations++;
         }
         finalRouteLength = routeLength(population.get(0));
-        return population;
+        return population.get(0);
     }
 }
 

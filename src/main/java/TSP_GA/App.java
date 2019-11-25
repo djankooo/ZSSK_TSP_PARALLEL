@@ -1,27 +1,33 @@
 package TSP_GA;
 
 import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 public class App {
 
-    static final int ISLAND_SIZE = 4;
-    private static final int NUMBER_OF_ISLANDS = 4;
-    private static ArrayList<Thread> threads = new ArrayList<>();
-    private static ArrayList<Runnable> runnables = new ArrayList<>();
-    private static volatile ArrayList<ArrayList<Integer>> shared = new ArrayList<>();
+    private static final int NUMBER_OF_ISLANDS = 100;
+    private static List<Future<ArrayList<Integer>>> results = new ArrayList<>();
+    private static List<Solution> callables = new ArrayList<>();
+    private static ExecutorService executor = Executors.newFixedThreadPool(100);
 
-    public static void main(String[] args) {
-        createRunnable();
-        runRunnable();
+    public static void main(String[] args) throws InterruptedException, ExecutionException {
 
-//        while (checkIfEveryThreadIsAlive(threads)) {
-//            int sourceSolution = drawSolutionToMigrate();
-//            int destinationSolution = drawSolutionToMigrate();
-//
-//            while (sourceSolution == destinationSolution) {
-//                destinationSolution = drawSolutionToMigrate();
-//            }
-//        }
+        for (int i = 0; i < NUMBER_OF_ISLANDS; i++) {
+            callables.add(new Solution());
+        }
+
+        results = executor.invokeAll(callables);
+
+        while (results.stream().allMatch(Future::isDone)) {
+            for (Future r : results) {
+                System.out.println(r.get());
+            }
+            break;
+        }
     }
 
     private static int drawSolutionToMigrate() {
@@ -33,16 +39,5 @@ public class App {
             if (!t.isAlive()) return false;
         }
         return true;
-    }
-
-    public static void createRunnable() {
-        for (int i = 0; i < NUMBER_OF_ISLANDS; i++) {
-            runnables.add(new Solution());
-        }
-    }
-
-    public static void runRunnable() {
-        runnables.forEach(r -> threads.add(new Thread(r)));
-        threads.parallelStream().forEach(Thread::start);
     }
 }
