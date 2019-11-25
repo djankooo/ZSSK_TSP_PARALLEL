@@ -15,23 +15,42 @@ import java.util.stream.IntStream;
 @Setter
 class GeneticAlgorithm {
 
-    private final int SIZE_OF_POPULATION = 10;
-    private Map map;
-    private ArrayList<ArrayList<Integer>> population = new ArrayList<>();
-    private Integer numberOfCities;
-    private Integer tournamentSize = 4;
+    private final int POPULATION_SIZE;
+    private final int MUTATION_PROBABILITY;
+    private final int CROSSING_PROBABILITY;
+    private final int TOURNAMENT_SIZE;
+    private final int MAX_ITERATIONS;
+    private final int GENOTYPES_TO_CROSSING = 16;
+    private final int SOLUTION_SIZE;
+    private final int ISLAND_SIZE;
+    private final int SOLUTIONS_TO_MIGRATE;
 
-    GeneticAlgorithm(Map map) {
+    private Double finalRouteLength;
+    private Map map;
+
+    private volatile ArrayList<ArrayList<Integer>> population = new ArrayList<>();
+    private volatile int iterations = 0;
+
+    GeneticAlgorithm(Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int max_iterations, int islandSize, int solutionsToMigrate) {
         this.map = map;
-        this.numberOfCities = this.map.getDIMENSION();
+        this.MAX_ITERATIONS = max_iterations;
+        this.SOLUTION_SIZE = this.map.getDIMENSION();
+        this.POPULATION_SIZE = sizeOfPopulation;
+        this.MUTATION_PROBABILITY = mutationProbability;
+        this.CROSSING_PROBABILITY = crossingProbability;
+        this.TOURNAMENT_SIZE = tournamentSize;
+        this.ISLAND_SIZE = islandSize;
+        this.SOLUTIONS_TO_MIGRATE = solutionsToMigrate;
     }
 
-    void createPopulation() {
+    private ArrayList<ArrayList<Integer>> createPopulation() {
+        ArrayList<ArrayList<Integer>> pop = new ArrayList<>();
         int iterator = 0;
-        while (iterator != SIZE_OF_POPULATION) {
-            population.add(randomSolution());
+        while (iterator != POPULATION_SIZE) {
+            pop.add(randomSolution());
             iterator++;
         }
+        return pop;
     }
 
     private Double distanceBetweenCities(City city, City city2) {
@@ -40,10 +59,10 @@ class GeneticAlgorithm {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 
-    public Double routeLength(ArrayList<Integer> path) {
+    private Double routeLength(ArrayList<Integer> path) {
         double routeLength = IntStream
-                .range(0, map.getDIMENSION() - 1)
-                .filter(i -> i != map.getDIMENSION())
+                .range(0, SOLUTION_SIZE - 1)
+                .filter(i -> i != SOLUTION_SIZE)
                 .mapToDouble(i -> distanceBetweenCities(map.getCITIES().get(path.get(i)), map.getCITIES().get(path.get(i + 1))))
                 .sum();
         routeLength += distanceBetweenCities(map.getCITIES().get(path.get(map.getDIMENSION() - 1)), map.getCITIES().get(path.get(0)));
@@ -59,79 +78,42 @@ class GeneticAlgorithm {
         return list;
     }
 
-
-    ArrayList<ArrayList<Integer>> sortSolutions(ArrayList<ArrayList<Integer>> population) {
+    private ArrayList<ArrayList<Integer>> sortSolutions(ArrayList<ArrayList<Integer>> population) {
         population.sort(Comparator.comparingDouble(this::routeLength));
         return population;
     }
 
-//    public ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
-//
-//        ArrayList<ArrayList<Integer>> tournamentRouts = new ArrayList<>(tournamentSize);
-//        ArrayList routes = new ArrayList();
-//        int length = pop.size();
-//        if (length < tournamentSize) return null;
-//        int j=0;
-//        for (int i = length - 1; i >= length - tournamentSize; --i) {
-//            int randomId = (int) (Math.random() * SIZE_OF_POPULATION);
-//            tournamentRouts.add(j,pop.get(randomId));
-//            j++;
-//        }
-//        int k=0; // Po co k?
-//        for (ArrayList<Integer> integers : tournamentRouts) {
-//            routes.add(routeLength(integers));
-//        }
-//        Double winner = (Double) Collections.min(routes);
-//        for (int i = 0; i < tournamentSize; i++) {
-//            if (routes.get(i) == winner) {
-//                System.out.println(winner);
-//                return tournamentRouts.get(i);
-//
-//            }
-//        }
-//        return null;
-//    }
-
-    ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> pop) {
-        ArrayList<ArrayList<Integer>> winnerPopulation = new ArrayList<>();
-
-        System.out.println("population - > " + pop);
-
-        for (int i = 0; i < pop.size() - 1; i = i + 2) {
-
-            System.out.println("[1] -> " + pop.get(i) + " -> " + routeLength(pop.get(i)).intValue());
-            System.out.println("[2] -> " + pop.get(i + 1) + " -> " + routeLength(pop.get(i + 1)).intValue());
-
-            if ((routeLength(pop.get(i)) < routeLength(pop.get(i + 1)))) {
-                winnerPopulation.add(pop.get(i));
-                System.out.println("Dodano [1] -> " + pop.get(i) + " -> " + routeLength(pop.get(i)).intValue());
-            } else {
-                winnerPopulation.add(pop.get(i + 1));
-                System.out.println("Dodano [2] -> " + pop.get(i + 1) + " -> " + routeLength(pop.get(i + 1)).intValue());
-
-            }
+    private ArrayList<ArrayList<Integer>> drawRandomSolutionsToTournament(ArrayList<ArrayList<Integer>> population) {
+        ArrayList<ArrayList<Integer>> tournamentPopulation = new ArrayList<>();
+        for (int i = 0; i < GENOTYPES_TO_CROSSING; i++) {
+            tournamentPopulation.add(population.get(Helper.generateRandomIntIntRange(0, population.size() - 1)));
         }
-
-        System.out.println("winnerPopulation - > " + winnerPopulation);
-        return (winnerPopulation.size() > 1) ? tournamentSelection(winnerPopulation) : winnerPopulation.get(0);
+        return tournamentPopulation;
     }
 
-    ArrayList<ArrayList<Integer>> crossingGenotypes(int crossingProbability, ArrayList<Integer> parent1, ArrayList<Integer> parent2) {
+    private ArrayList<Integer> tournamentSelection(ArrayList<ArrayList<Integer>> population) {
+        sortSolutions(population);
+        return population.get(0);
+    }
+
+    private ArrayList<ArrayList<Integer>> crossingGenotypes(ArrayList<ArrayList<Integer>> population) {
 
         ArrayList<ArrayList<Integer>> arrayLists = new ArrayList<>();
 
-        if (Helper.generateRandomIntIntRange(1, 100) < crossingProbability) {
+        for (int i = 0; i < GENOTYPES_TO_CROSSING - 1; i = i + 2) {
+            if (Helper.generateRandomIntIntRange(1, 100) < CROSSING_PROBABILITY) {
 
-            int pointOfCrossing = Helper.generateRandomIntIntRange(1, numberOfCities - 1);
+                int pointOfCrossing = Helper.generateRandomIntIntRange(1, SOLUTION_SIZE - 1);
 
-            ArrayList<Integer> child1 = crossing(parent1, parent2, pointOfCrossing);
-            ArrayList<Integer> child2 = crossing(parent2, parent1, pointOfCrossing);
+                ArrayList<Integer> child1 = crossing(population.get(i), population.get(i + 1), pointOfCrossing);
+                ArrayList<Integer> child2 = crossing(population.get(i + 1), population.get(i), pointOfCrossing);
 
-            arrayLists.add(child1);
-            arrayLists.add(child2);
-        } else {
-            arrayLists.add(parent1);
-            arrayLists.add(parent2);
+                arrayLists.add(child1);
+                arrayLists.add(child2);
+            } else {
+                arrayLists.add(population.get(i));
+                arrayLists.add(population.get(i + 1));
+            }
         }
         return arrayLists;
     }
@@ -146,15 +128,42 @@ class GeneticAlgorithm {
         return child;
     }
 
-    ArrayList<Integer> mutationGenotypes(int mutationProbability, ArrayList<Integer> parent) {
-        if (Helper.generateRandomIntIntRange(1, 100) < mutationProbability) {
-            int pointOfCrossing = Helper.generateRandomIntIntRange(1, numberOfCities - 1);
-            int pointOfCrossing2 = Helper.generateRandomIntIntRange(1, numberOfCities - 1);
-            Collections.swap(parent, pointOfCrossing, pointOfCrossing2);
+    private ArrayList<ArrayList<Integer>> mutationGenotypes(ArrayList<ArrayList<Integer>> population) {
+
+        for (ArrayList<Integer> integers : population) {
+            if (Helper.generateRandomIntIntRange(1, 100) < MUTATION_PROBABILITY) {
+                int pointOfCrossing = Helper.generateRandomIntIntRange(1, SOLUTION_SIZE - 1);
+                int pointOfCrossing2 = Helper.generateRandomIntIntRange(1, SOLUTION_SIZE - 1);
+                Collections.swap(integers, pointOfCrossing, pointOfCrossing2);
+            }
         }
-        return parent;
+        return population;
     }
 
+    public synchronized void replaceSolutions(ArrayList<ArrayList<Integer>> passedValues) {
+        sortSolutions(population).subList(0, POPULATION_SIZE - SOLUTIONS_TO_MIGRATE);
+        population.addAll(passedValues);
+        sortSolutions(population);
+    }
 
+    public ArrayList<ArrayList<Integer>> algorithm() {
+        population = new ArrayList<>(createPopulation());
+        while (iterations < MAX_ITERATIONS) {
+
+            ArrayList<ArrayList<Integer>> tournamentPopulation = new ArrayList<>();
+            ArrayList<ArrayList<Integer>> crossedPopulation;
+            ArrayList<ArrayList<Integer>> mutatedPopulation;
+
+            while (tournamentPopulation.size() != GENOTYPES_TO_CROSSING) {
+                tournamentPopulation.add(tournamentSelection(drawRandomSolutionsToTournament(population)));
+            }
+            crossedPopulation = crossingGenotypes(tournamentPopulation);
+            mutatedPopulation = mutationGenotypes(crossedPopulation);
+            population = sortSolutions(mutatedPopulation);
+            iterations++;
+        }
+        finalRouteLength = routeLength(population.get(0));
+        return population;
+    }
 }
 

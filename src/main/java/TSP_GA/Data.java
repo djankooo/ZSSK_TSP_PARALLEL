@@ -14,7 +14,7 @@ import java.util.regex.Pattern;
 class Data {
 
     private String pathToDirectory;
-    private String pathToFile;
+    private String filename;
 
     private File file;
     private BufferedReader bufferedReader;
@@ -22,12 +22,18 @@ class Data {
 
     private Map map = new Map();
 
-    void checkAndSetFile() {
-        if (pathToDirectory != null && pathToFile != null)
-            file = new File(getPathToDirectory() + getPathToFile());
+    Data(String path, String filename) {
+        this.pathToDirectory = path;
+        this.filename = filename;
     }
 
-    void saveMap() throws IOException {
+    public void checkAndReadFile() throws IOException {
+        if (pathToDirectory != null && filename != null)
+            file = new File(getPathToDirectory() + getFilename());
+        readMapFromFile();
+    }
+
+    public void readMapFromFile() throws IOException {
 
         bufferedReader = new BufferedReader(new FileReader(file));
 

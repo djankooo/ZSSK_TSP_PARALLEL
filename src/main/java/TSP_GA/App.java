@@ -1,36 +1,48 @@
 package TSP_GA;
 
-import java.io.IOException;
 import java.util.ArrayList;
 
 public class App {
-    public static void main(String[] args) throws IOException {
 
-        Data data = new Data();
-        GeneticAlgorithm geneticAlgorithm;
+    static final int ISLAND_SIZE = 4;
+    private static final int NUMBER_OF_ISLANDS = 4;
+    private static ArrayList<Thread> threads = new ArrayList<>();
+    private static ArrayList<Runnable> runnables = new ArrayList<>();
+    private static volatile ArrayList<ArrayList<Integer>> shared = new ArrayList<>();
 
-        String maxPath = "/home/max/ZSSK/ZSSK_TSP_PARALLEL/src/main/java/resources/";
-        String janPath = "/home/djankooo/IdeaProjects/ZSSK/src/main/java/resources/";
+    public static void main(String[] args) {
+        createRunnable();
+        runRunnable();
 
-        data.setPathToDirectory(janPath);
-        data.setPathToFile("test1.tsp");
-        data.checkAndSetFile();
-        data.saveMap();
-
-        geneticAlgorithm = new GeneticAlgorithm(data.getMap());
-        geneticAlgorithm.createPopulation();
-
-        ArrayList tournamentWinner=geneticAlgorithm.tournamentSelection(geneticAlgorithm.getPopulation());
-
-
+//        while (checkIfEveryThreadIsAlive(threads)) {
+//            int sourceSolution = drawSolutionToMigrate();
+//            int destinationSolution = drawSolutionToMigrate();
+//
+//            while (sourceSolution == destinationSolution) {
+//                destinationSolution = drawSolutionToMigrate();
+//            }
+//        }
     }
 
-    private static void printSolution(GeneticAlgorithm geneticAlgorithm) {
-        for (ArrayList<Integer> integers : geneticAlgorithm.getPopulation()) {
-            System.out.print(integers);
-            System.out.print(" -> " + geneticAlgorithm.routeLength(integers));
-            System.out.println();
+    private static int drawSolutionToMigrate() {
+        return Helper.generateRandomIntIntRange(0, NUMBER_OF_ISLANDS - 1);
+    }
+
+    public static boolean checkIfEveryThreadIsAlive(ArrayList<Thread> threads) {
+        for (Thread t : threads) {
+            if (!t.isAlive()) return false;
         }
-        System.out.println();
+        return true;
+    }
+
+    public static void createRunnable() {
+        for (int i = 0; i < NUMBER_OF_ISLANDS; i++) {
+            runnables.add(new Solution());
+        }
+    }
+
+    public static void runRunnable() {
+        runnables.forEach(r -> threads.add(new Thread(r)));
+        threads.parallelStream().forEach(Thread::start);
     }
 }
