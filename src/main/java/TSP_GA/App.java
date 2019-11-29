@@ -1,6 +1,7 @@
 package TSP_GA;
 
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -18,8 +19,8 @@ public class App {
     private static final int MAX_GA_ITERATIONS = 10000;
     private static final int NUMBER_OF_ISLANDS = 4;
     private static final int NUMBER_OF_SOLUTIONS_TO_MIGRATE = 5;
-    private static final String PATH = "/home/djankooo/projects/java_projects/ZSSK_TSP_PARALLEL/src/main/java/resources/";
-    private static final String FILE_NAME = "berlin52.tsp";
+    private static final String PATH = Paths.get("./src/main/java/resources").toAbsolutePath().normalize().toString();
+    private static final String FILE_NAME = "/berlin52.tsp";
     private static int THREAD_ITERATIONS = 2;
     private static List<Future<ArrayList<ArrayList<Integer>>>> results = new ArrayList<>();
     private static List<GeneticAlgorithm> callables = new ArrayList<>();
