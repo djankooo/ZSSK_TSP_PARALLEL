@@ -27,13 +27,13 @@ class Data {
         this.filename = filename;
     }
 
-    public void checkAndReadFile() throws IOException {
+    void checkAndReadFile() throws IOException {
         if (pathToDirectory != null && filename != null)
             file = new File(getPathToDirectory() + getFilename());
         readMapFromFile();
     }
 
-    public void readMapFromFile() throws IOException {
+    private void readMapFromFile() throws IOException {
 
         bufferedReader = new BufferedReader(new FileReader(file));
 

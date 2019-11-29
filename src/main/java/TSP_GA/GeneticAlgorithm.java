@@ -7,13 +7,14 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Random;
+import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
 @Getter
 @Setter
-class GeneticAlgorithm {
+class GeneticAlgorithm implements Callable<ArrayList<ArrayList<Integer>>> {
 
     private final int POPULATION_SIZE;
     private final int MUTATION_PROBABILITY;
@@ -26,17 +27,29 @@ class GeneticAlgorithm {
     private Double finalRouteLength;
     private Map map;
 
-    private ArrayList<ArrayList<Integer>> population = new ArrayList<>();
+    private ArrayList<ArrayList<Integer>> population;
     private int iterations = 0;
 
-    GeneticAlgorithm(Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int max_iterations) {
+    GeneticAlgorithm(Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int maxIterations) {
         this.map = map;
-        this.MAX_ITERATIONS = max_iterations;
+        this.MAX_ITERATIONS = maxIterations;
         this.SOLUTION_SIZE = this.map.getDIMENSION();
         this.POPULATION_SIZE = sizeOfPopulation;
         this.MUTATION_PROBABILITY = mutationProbability;
         this.CROSSING_PROBABILITY = crossingProbability;
         this.TOURNAMENT_SIZE = tournamentSize;
+        this.population = new ArrayList<>(createPopulation());
+    }
+
+    GeneticAlgorithm(ArrayList<ArrayList<Integer>> list, Map map, int sizeOfPopulation, int mutationProbability, int crossingProbability, int tournamentSize, int maxIterations) {
+        this.map = map;
+        this.MAX_ITERATIONS = maxIterations;
+        this.SOLUTION_SIZE = this.map.getDIMENSION();
+        this.POPULATION_SIZE = sizeOfPopulation;
+        this.MUTATION_PROBABILITY = mutationProbability;
+        this.CROSSING_PROBABILITY = crossingProbability;
+        this.TOURNAMENT_SIZE = tournamentSize;
+        this.population = list;
     }
 
     private ArrayList<ArrayList<Integer>> createPopulation() {
@@ -55,7 +68,7 @@ class GeneticAlgorithm {
         return Math.sqrt(Math.pow(x, 2) + Math.pow(y, 2));
     }
 
-    public Double routeLength(ArrayList<Integer> path) {
+    private Double routeLength(ArrayList<Integer> path) {
         double routeLength = IntStream
                 .range(0, SOLUTION_SIZE - 1)
                 .filter(i -> i != SOLUTION_SIZE)
@@ -136,8 +149,8 @@ class GeneticAlgorithm {
         return population;
     }
 
-    public ArrayList<Integer> algorithm() {
-        population = new ArrayList<>(createPopulation());
+    @Override
+    public ArrayList<ArrayList<Integer>> call() {
         while (iterations < MAX_ITERATIONS) {
 
             ArrayList<ArrayList<Integer>> tournamentPopulation = new ArrayList<>();
@@ -148,15 +161,16 @@ class GeneticAlgorithm {
                 tournamentPopulation.add(tournamentSelection(drawRandomSolutionsToTournament(population)));
             }
             crossedPopulation = crossingGenotypes(tournamentPopulation);
-            population = new ArrayList<>(sortSolutions(population).subList(0,POPULATION_SIZE - GENOTYPES_TO_CROSSING));
+            population = new ArrayList<>(sortSolutions(population).subList(0, POPULATION_SIZE - GENOTYPES_TO_CROSSING));
             population.addAll(crossedPopulation);
-            population = sortSolutions(population);
+            sortSolutions(population);
             mutatedPopulation = mutationGenotypes(population);
             population = sortSolutions(mutatedPopulation);
             iterations++;
         }
+        sortSolutions(population);
         finalRouteLength = routeLength(population.get(0));
-        return population.get(0);
+        return population;
     }
 }
 
